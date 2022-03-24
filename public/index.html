@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google sign-in</title>
+</head>
+
+<body>
+
+    <h1>Google Sign In</h1>
+    <hr>
+
+    <div id="g_id_onload" 
+        data-client_id="28933440555-glj8nb131b1a2m8f8s7i69ec9cg35ruk.apps.googleusercontent.com"
+        data-auto_prompt="false" 
+        data-callback="handleCredentialResponse">
+    </div>
+    <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with"
+        data-shape="rectangular" data-logo_alignment="left">
+    </div>
+
+    <button id="google_signout">Signout</button>
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <script>
+        const btnSalir = document.getElementById('google_signout');
+
+        /**
+         * es una función de API de google que sirve para traer la información del correo con el
+         * que se quiere ingresar al sistema
+         * https://console.cloud.google.com/apis/credentials/oauthclient
+         */
+        function handleCredentialResponse(response) {
+
+            const rutaUsar = window.location.hostname.includes('localhost') ? 'http://localhost:3001/api/auth/google' : 'https://rest-server-carlos-node.herokuapp.com/api/auth/google';
+            //Google toke: ID_TOKEN
+            const cuerpo = {
+                id_token: response.credential // es el id_token que recibe router.post('/google', [
+            };
+
+            //opciones que se le mandan a la petción fetch
+            const options = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(cuerpo)
+            };
+
+            //petición al backend para hacer la búsqueda del usuario
+            fetch(rutaUsar, options)
+                .then(res => res.json())
+                .then(data => {
+                    localStorage.setItem('correo', data.usuario.correo); //se guarda el correo en localStorage
+                    location.reload(); // se recarga la página una vez que se creó el inicio de sesión
+                })
+                .catch(err => console.log(err));
+        }
+
+        /**
+         * Evento del botón de salir para terminar la sesión de google
+         * */
+        btnSalir.onclick = () => {
+
+            //sirve para eliminar las credenciales de google y del localStorage que se creó
+            google.accounts.id.disableAutoSelect();
+            google.accounts.id.revoke(localStorage.getItem('correo'), terminado => {
+                localStorage.clear(); //limpia el local Storage del navegador
+                location.reload(); //recarga la lágina para que se vean los cambios de limpieza
+            });
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,42 @@
+{
+  "name": "07-rest-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "//": {
+    "bcryptjs": "Sirve para encriptar cadenas de texto y según el número es la cantidad de vueltas que hace para encriptar",
+    "cloudinary": "sirve para usar el servicio de cloudinary donde se están guardando los archivos y las imagenes",
+    "cors": "cors para el uso de peticiones fuera del servidor, cuando se hacen a APIs, etc",
+    "dotenv": "sirve para hacer uso de archivos .env",
+    "express": "sirve para poder configurar un servidor de manera más rápida que todo desde js nativo",
+    "express-fileupload": "librería que sirve para poder subir archivos al servidor",
+    "express-validator": "librería que sirve para poder validar campos de diferentes tipos como correos, tamaño, customs, etc",
+    "google-auth-library": "librería que sirve para hacer las autenticaciones con correos de google",
+    "jsonwebtoken": "librería que sirve para crear los JWT",
+    "moment": "librería que sirve para formatear fechas",
+    "mongoose": "librería ODM (Object Document Mapper) que sirve para poder crear Schemas y modelos (como conexiones a mongo de una tabla) y trabajar con bases de datos en forma de código y no por queries",
+    "uuid": "librería que sirve para generar uuid únicos en todo el mundo"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^1.28.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.17.2",
+    "express-fileupload": "^1.3.1",
+    "express-validator": "^6.14.0",
+    "google-auth-library": "^7.14.0",
+    "jsonwebtoken": "^8.5.1",
+    "moment": "^2.29.1",
+    "mongoose": "^6.2.2",
+    "mysql": "^2.18.1",
+    "uuid": "^8.3.2"
+  }
+}
