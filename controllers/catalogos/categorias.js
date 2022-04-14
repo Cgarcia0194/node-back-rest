@@ -1,99 +1,164 @@
-const {mensaje, response} = require('../../helpers');
-const {Categoria} = require('../../models');
+const {
+    Categoria
+} = require('../../models');
+const {
+    respuesta,
+    response
+} = require('../../helpers');
 
-//Función que crea la categoria
-const crearCategoria = async (req, res = response) => {
-    const nombre = req.body.nombre.toUpperCase();
+const {
+    dbConnection
+} = require("../../DB/config");
 
-    const categoriaDB = await Categoria.findOne({
-        nombre
-    });
+const {
+    QueryTypes
+} = require("sequelize");
 
-    if (categoriaDB) {
-        return mensaje(res, 400, `El nombre de la categoria '${nombre}' ya está registrado`);
+//Función que inserta la categoria
+const registrarCategoria = async (req, res = response) => {
+
+    const {
+        txtNombre
+    } = req.body;
+
+    const data = {
+        nombre: txtNombre,
+        usuario: req.usuario.id
     }
 
-    const data = {
-        nombre,
-        usuario: req.usuario._id
-    };
+    try {
+        const categoria = Categoria.build(data);
+        await categoria.save();
 
-    const categoria = new Categoria(data);
+        return respuesta(res, 200, 'success', 'Se ha registrado la información correctamente', categoria);
 
-    await categoria.save();
-
-    return mensaje(res, 200, categoria);
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin', null);
+    }
 };
 
-//actualizar categoria
+//actualiza información en el servidor
 const actualizarCategoria = async (req, res = response) => {
-    const {idCategoria} = req.params;
 
-    const nombre = req.body.nombre.toUpperCase();
-
-    const data = {
-        idCategoria,
-        nombre
-    };
-
-    const categoria = await Categoria.findByIdAndUpdate(idCategoria, data, {new: true}); //LO ENCUENTRA Y ACTUALIZA
-
-    return mensaje(res, 200, categoria);
-};
-
-//eliminar categoria
-const eliminarCategoria = async (req, res = response) => {
-    const {id} = req.params;
-
-    //Elimina la categoria de manera física
-    //const categoria = await Categoria.findByIdAndDelete(id);
-    const categoriaEliminada = await Categoria.findByIdAndUpdate(id, {
-        estatus: 'Inactivo'
-    }, {new: true});
-
-    return mensaje(res, 200, categoriaEliminada);
-};
-
-//obtener categorias - paginado - total- populate
-const consultarCategoriasActivas = async (req, res = response) => {
     const {
-        limite = 10, desde = 1
-    } = req.query; //valores que mando en la url para saber desde y el límite de registros que quiero
+        txtNombre,
+        idCategoria
+    } = req.body;
 
-    const query = {
-        estatus: 'Activo'
-    };
+    try {
 
-    const [total, categorias] = await Promise.all([
-        Categoria.countDocuments(query), //hace un conteo de los registros de la tabla
-        Categoria.find(query) //find trae los registros de la tabla si no hay limit ni skip traerá toooodos
-        .populate('usuario', ['nombre', 'correo'])//extrae de usuario el nombre y el correo, si no se pone se va mostrar todo el registro
-        .skip(Number(desde - 1)) //skip sirve para saltar
-        .limit(Number(limite)) //limit es para limitar con un número
-    ]);
+        const data = {
+            id: idCategoria,
+            nombre: txtNombre
+        }
 
-    return mensaje(res, 200, {total, categorias});
+        const categoria = await Categoria.findByPk(idCategoria);
+
+        if (!categoria) {
+            return respuesta(res, 400, 'info', 'No existe la categoria con el id: ' + idCategoria);
+        }
+
+        await categoria.update(data);
+
+        return respuesta(res, 200, 'success', 'Se ha actualizado la información correctamente', categoria);
+
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin', null);
+    }
 };
 
-//obtener categoria - populate
+//elimina información del servidor
+const desactivarReactivarCategoria = async (req, res = response) => {
+
+    const {
+        idCategoria,
+        estatus,
+    } = req.body;
+
+    try {
+
+        const categoria = await Categoria.findByPk(idCategoria);
+
+        if (!categoria) {
+            return respuesta(res, 400, 'error', 'No existe la categoria con el id: ' + idCategoria);
+        }
+
+        await categoria.update({
+            estatus
+        });
+
+        //borra de manera física el registro
+        // await usuario.destroy();
+
+        if (estatus == 1) {
+            return respuesta(res, 200, 'success', `Se ha reactivado la categoria ${categoria.nombre} correctamente`, categoria);
+        } else {
+            return respuesta(res, 200, 'success', `Se ha desactivado la categoria ${categoria.nombre} correctamente`, categoria);
+        }
+
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin', null);
+    }
+};
+
+//trae info del servidor
+const consultarCategorias = async (req, res = response) => {
+    try {
+        const categorias = await dbConnection.query(
+            'SELECT * FROM categorias ', {
+                // replacements: {
+                //     estatus: 1
+                // },
+                type: QueryTypes.SELECT
+            }
+        );
+
+        // const categorias = await Usuario.findAll();
+
+        if (!categorias || categorias.length === 0) {
+            return respuesta(res, 200, 'info', 'La tabla no tiene categorias registradas', null);
+        }
+
+        return respuesta(res, 200, 'success', 'Información consultada correctamente', categorias);
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin', null);
+    }
+
+};
+
+//consulta una categoria por id
 const consultarCategoria = async (req, res = response) => {
+    //params es para params que se pasan por url
     const {
         id
     } = req.params;
 
-    const categoria = await Categoria.findById(id).populate('usuario', ['nombre, correo']);
+    //body es para params que se paasan por el body
+    // const {
+    //     id
+    // } = req.body;
 
-    if (!categoria) {
-        return mensaje(res, 400, `No se ha encontrado la categoria con el id ${id}, tal vez está inactivo o no existe`);
+    try {
+        const categoria = await Categoria.findByPk(id);
+
+        if (!categoria) {
+            return respuesta(res, 400, 'info', `No existe la categoria con el id: ${id}`);
+        }
+
+        return respuesta(res, 200, 'success', 'Información consultada correctamente', categoria);
+    } catch (error) {
+        console.log(error);
     }
-
-    return mensaje(res, 200, {categoria});
 };
 
 module.exports = {
-    crearCategoria,
+    registrarCategoria,
     actualizarCategoria,
-    eliminarCategoria,
-    consultarCategoriasActivas,
+    desactivarReactivarCategoria,
+    consultarCategorias,
     consultarCategoria
-}
+};

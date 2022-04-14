@@ -1,12 +1,22 @@
 const {
-    bcryptjs,
     generarJWT,
     googleVerify,
-    mensaje,
+    respuesta,
+    compararTextoEncriptado,
     response,
 } = require('../helpers');
 
-const {Usuarios} = require('../models');
+const {
+    Usuario
+} = require('../models');
+
+const {
+    dbConnection
+} = require("../DB/config");
+
+const {
+    QueryTypes
+} = require("sequelize");
 
 /**
  * Función que sirve para poder loguear o hacer que un usuario ingrese al sistema
@@ -17,45 +27,65 @@ const {Usuarios} = require('../models');
 const login = async (req, res = response) => {
 
     const {
-        correo,
-        contrasenia
+        txtCorreo,
+        txtContrasenia
     } = req.body;
 
     try {
-        //verificar xi el correo existe
-        let usuario = await Usuarios.findOne({
-            correo
-        }); //busca el usuario mediante su modelo buscandolo por el correo que se ingresa
+        let user = await dbConnection.query(
+            'SELECT usuarios.*, CONCAT(personas.nombre," ",personas.apellido_paterno," ", personas.apellido_materno) AS nombre_completo FROM usuarios INNER JOIN personas ON personas.id = usuarios.id WHERE correo = :correo', {
+                replacements: {
+                    correo: txtCorreo
+                },
+                type: QueryTypes.SELECT
+            }
+        );
 
-        //si no hay valores en la variable es porque no coincide el correo
-        if (!usuario) {
-            return mensaje(res, 400, 'Usuario / contraseña no son correctos');
+        if (!user || user.length === 0) {
+            return respuesta(res, 400, 'info', 'Correo incorrecto');
         }
 
-        //verifica que el usuario que se quiere loguear esté como activo
-        if (usuario.estado === false) { //false = inactivo
-            return mensaje(res, 400, 'el usuario no está activo');
+        const {
+            id,
+            nombre,
+            correo,
+            contrasenia,
+            google,
+            persona,
+            estatus,
+            nombre_completo,
+        } = user[0];
+
+        const usuario = {
+            id,
+            nombre,
+            correo,
+            google,
+            persona,
+            estatus,
+            nombre_completo,
         }
 
-        //se busca la contraseña comparando por el bcriptjs (contraseña que mete el usuario, contraseña del correo con el que coincidió)
-        const contraseniaValida = bcryptjs.compareSync(contrasenia, usuario.contrasenia);
+        if (usuario.estatus === 'Inactivo') {
+            return respuesta(res, 400, 'warning', 'El usuario está inactivo, contacte a un admin');
+        }
+
+        const contraseniaValida = compararTextoEncriptado(txtContrasenia, contrasenia);
 
         //si contraseniaValida es false no es correcta
         if (contraseniaValida === false) {
-            return mensaje(res, 400, 'la contraseña no es correcta');
+            return respuesta(res, 400, 'info', 'La contraseña no es correcta');
         }
 
-        //genera el JWT con los datos del usuario que ya se acaba de loguear en las líneas anteriores
         const token = await generarJWT(usuario.id);
 
-        //regreso a la petción los datos del usuario y el token generado
-        res.json({
+        return respuesta(res, 200, 'success', 'Información consultada correctamente', {
             usuario,
             token
         });
     } catch (error) {
         console.log(error);
-        return mensaje(res, 400, 'Hable con el administrador');
+        return respuesta(res, 400, 'error', 'Hable con el administrador');
     }
 };
 
@@ -71,6 +101,7 @@ const googleSignIn = async (req, res = response) => {
     } = req.body;
 
     try {
+
         const {
             nombre,
             imagen,
@@ -79,40 +110,35 @@ const googleSignIn = async (req, res = response) => {
             apellido_paterno
         } = await googleVerify(id_token);
 
-        let usuario = await Usuarios.findOne({
-            correo
-        });
+        let usuario = await dbConnection.query(
+            'SELECT * FROM usuarios WHERE correo = :correo ', {
+                replacements: {
+                    correo
+                },
+                type: QueryTypes.SELECT
+            }
+        );
 
-        // if(!usuario){
-        //     const data = {
-        //         nombre,
-        //         correo,
-        //         contrasenia: '123456',
-        //         img: imagen,
-        //         rol: 'USER_ROLE',
-        //         google: true
-        //     };
-
-        //     usuario = new Usuario(data);
-        //     await usuario.save();
-        // }
+        if (!usuario || usuario.length === 0) {
+            return respuesta(res, 401, 'error', 'No hay info relacionada con el correo: ' + correo);
+        }
 
         //si el usuario en bd está inactivo false
-        if (usuario.estado === false) {
-            return mensaje(res, 401, 'Hable con el administrador, usuario inactivo');
+        if (usuario.estatus === 'Inactivo') {
+            return respuesta(res, 401, 'error', 'Hable con el administrador, usuario inactivo');
         }
 
         //genera el JWT con los datos del usuario que ya se acaba de loguear en las líneas anteriores
-        const token = await generarJWT(usuario._id);
+        const token = await generarJWT(usuario.id);
 
-        res.json({
-            "msg": 'Todo bien',
+        return respuesta(res, 200, 'success', 'Información consultada correctamente', {
             usuario,
             token
         });
 
     } catch (error) {
-        mensaje(res, 400, 'El token no se pudo verificar');
+        console.log(error);
+        return respuesta(res, 401, 'error', 'El token no se pudo verificar');
     }
 };
 

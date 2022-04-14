@@ -1,70 +1,231 @@
-const {mensaje, bcryptjs, response} = require('../../helpers');
-const {Persona, Usuarios} = require('../../models');
+const {
+    Persona,
+    Usuario
+} = require('../../models');
 
-//función que sirve para traer las personas
-const personasGet = async (req, res = response) => {
-    const {limite = 10, desde = 1} = req.query;//valores que mando en la url para saber desde y el límite de registros que quiero
+const {
+    respuesta,
+    request,
+    response,
+    encriptarTexto
+} = require('../../helpers');
 
-    const [total, personas] = await Promise.all([
-        Persona.countDocuments(),
-        Persona.find()
-            .skip(Number(desde - 1))
-            .limit(Number(limite))
-    ]);
+const {
+    dbConnection
+} = require("../../DB/config");
 
-    return mensaje(res, 200, {total, personas});
+const {
+    QueryTypes
+} = require("sequelize");
+
+const registrarPersona = async (req, res = response) => {
+
+    const {
+        txtNombre,
+        txtApellidoPaterno,
+        txtApellidoMaterno,
+        txtRFC,
+        txtCURP,
+        cmbGenero,
+        txtTel,
+        txtTelFijo,
+        txtFechaNac,
+        txtEdad,
+        txtCorreo,
+        cmbEstadoCivil,
+        cmbNacionalidad,
+        cmbMunicipio
+    } = req.body;
+
+    const data = {
+        nombre: txtNombre,
+        apellido_paterno: txtApellidoPaterno,
+        apellido_materno: txtApellidoMaterno,
+        rfc: txtRFC,
+        curp: txtCURP,
+        genero: cmbGenero,
+        telefono: txtTel,
+        telefono_fijo: txtTelFijo,
+        fecha_nacimiento: txtFechaNac,
+        edad: txtEdad,
+        correo_electronico: txtCorreo,
+        estado_civil: cmbEstadoCivil,
+        nacionalidad: cmbNacionalidad,
+        municipio: cmbMunicipio,
+    }
+
+    try {
+        const persona = Persona.build(data);
+        await persona.save();
+
+        //se registra el usuario aquí
+
+        const anio = new Date().getFullYear();
+        const nombre_usuario = `${anio}0000${persona.id}`;
+
+        const contraseniaEncrip = encriptarTexto(nombre_usuario);
+
+        const data_usuario = {
+            nombre: nombre_usuario,
+            correo: txtCorreo,
+            google: false,
+            contrasenia: contraseniaEncrip,
+            persona: persona.id
+        }
+
+        const usuario = Usuario.build(data_usuario);
+        await usuario.save();
+
+        return respuesta(res, 200, 'success', 'Se ha registrado la persona correctamente', {
+            persona,
+            usuario
+        });
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin');
+    }
 };
 
-//Función que inserta el persona
-const personasPost = async (req, res = response) => {
+const actualizarPersona = async (req, res = response) => {
+    const {
+        idPersona,
+        txtNombre,
+        txtApellidoPaterno,
+        txtApellidoMaterno,
+        txtRFC,
+        txtCURP,
+        cmbGenero,
+        txtTel,
+        txtTelFijo,
+        txtFechaNac,
+        txtEdad,
+        txtCorreo,
+        cmbEstadoCivil,
+        cmbNacionalidad,
+        cmbMunicipio
+    } = req.body;
 
-    const info = req.body; //desestructuro el body con los valores que son obligatorios
+    try {
 
-    const persona = new Persona({
-        nombre: info.txtNombre,
-        apellido_paterno: info.txApellidoPaterno,
-        apellido_materno: info.txApellidoMaterno,
-        rfc: info.txtRfc,
-        curp: info.txtCurp,
-        genero: info.txtGenero,
-        telefono: info.txtTelefono,
-        telefono_opcional: info.txtTelefonoOp,
-        fecha_nacimiento: info.txtFechaNac,
-        edad: info.txtEdad,
-        correo: info.txtCorreo,
-        estado_civil: info.txtEstadocivil,
-        nacionalidad: info.txtNacionalidad,
-        img: info.txtImg
-    }); //mando los valores desestructurados al modelo de persona
+        const data = {
+            id: idPersona,
+            nombre: txtNombre,
+            apellido_paterno: txtApellidoPaterno,
+            apellido_materno: txtApellidoMaterno,
+            rfc: txtRFC,
+            curp: txtCURP,
+            genero: cmbGenero,
+            telefono: txtTel,
+            telefono_fijo: txtTelFijo,
+            fecha_nacimiento: txtFechaNac,
+            edad: txtEdad,
+            correo_electronico: txtCorreo,
+            estado_civil: cmbEstadoCivil,
+            nacionalidad: cmbNacionalidad,
+            municipio: cmbMunicipio,
+        }
 
-    const usuario = new Usuarios({
-        nombre: info.txtNombre,
-        correo: info.txtCorreo,
-        contrasenia: info.txtContrasenia,
-        rol: 'USER_ADMIN',
-        persona: persona._id
-    }); //mando los valores desestructurados al modelo de usuario
+        const persona = await Persona.findByPk(idPersona);
 
-    //encriptar la contraseña
-    //bcryptjs sirve para encriptar y según el número es la cantidad de vueltas que hace para encriptar
-    //entre mayor el numero mas seguro es, pero tarda más en procesar
-    const salt = bcryptjs.genSaltSync(10);
+        if (!persona) {
+            return respuesta(res, 400, 'info', 'No existe la persona con el id: ' + idPersona);
+        }
 
-    //mando al modelo de usuario.contrasenia la clave encriptada
-    usuario.contrasenia = bcryptjs.hashSync(info.txtContrasenia, salt);
+        await persona.update(data);
 
-    //guarda en la bd en persona
-    await persona.save();
+        return respuesta(res, 200, 'success', 'Se ha actualizado la info de manera correcta', persona);
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin');
 
-    //guardar en la bd en usuario con el id de persona
-    await usuario.save();
-
-    return mensaje(res, 200, {msg: 'Post API - controlador', persona});
+    }
 };
 
+const eliminarPersona = async (req, res = response) => {
 
-//se exportan las variables de cada ruta
+    const {
+        idUsuario
+    } = req.body;
+
+    try {
+
+        const usuario = await dbConnection.query(
+            'SELECT personas.*, usuarios.estatus FROM usuarios INNER JOIN personas ON personas.id = usuarios.persona WHERE usuarios.id = :id ', {
+                replacements: {
+                    id: idUsuario
+                },
+                type: QueryTypes.SELECT
+            }
+        );
+
+
+        if (!usuario || usuario.length === 0) {
+            return respuesta(res, 200, 'info', 'No existe el usuario con el id: ' + idUsuario);
+        }
+
+        await dbConnection.query(
+            'UPDATE usuarios SET estatus = 2 WHERE usuarios.id = :idUsuario ', {
+                replacements: {
+                    idUsuario
+                },
+                type: QueryTypes.UPDATE
+            }
+        );
+
+        return respuesta(res, 200, 'success', `Se ha desactivado la persona y el usuario ${usuario[0].nombre} correctamente`, usuario);
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin');
+    }
+};
+
+const consultarPersonas = async (req, res = response) => {
+
+    const usuarios = await dbConnection.query(
+        'SELECT personas.*, usuarios.estatus AS usuarios_estatus, usuarios.correo AS usuarios_correo FROM usuarios INNER JOIN personas ON personas.id = usuarios.persona ', {
+            type: QueryTypes.SELECT
+        }
+    );
+
+    // const usuarios = await Usuario.findAll();
+
+    if (!usuarios || usuarios.length === 0) {
+        return respuesta(res, 200, 'info', 'La tabla no tiene usuarios registrados');
+    }
+
+    return respuesta(res, 200, 'success', 'Información consultada correctamente', usuarios);
+};
+
+const consultarPersona = async (req = request, res = response) => {
+
+    try {
+
+        const id = req.usuario.id;
+
+        const usuario = await dbConnection.query(
+            'SELECT personas.*, usuarios.estatus AS usuarios_estatus, usuarios.correo AS usuarios_correo FROM usuarios INNER JOIN personas ON personas.id = usuarios.persona WHERE usuarios.id = :id ', {
+                replacements: {
+                    id
+                },
+                type: QueryTypes.SELECT
+            }
+        );
+
+        if (!usuario || usuario.length === 0) {
+            return respuesta(res, 200, 'info', 'No existe el usuario con el id: ' + id);
+        }
+
+        return respuesta(res, 200, 'success', 'Información consultada correctamente', usuario);
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin', null);
+    }
+};
+
 module.exports = {
-    personasGet,
-    personasPost
+    registrarPersona,
+    actualizarPersona,
+    eliminarPersona,
+    consultarPersonas,
+    consultarPersona
 };

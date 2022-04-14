@@ -1,45 +1,19 @@
-const mongoose = require('mongoose');
-const mysql = require('mysql');
+const {
+    Sequelize
+} = require("sequelize");
 
-//función que sirve para crear la conexión con mongoDB
-const dbConnection = async () => {
-    try {
-        await mongoose.connect(process.env.MONGODB_CON, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            // useCreateIndex: true,
-            // useFindAndModify: false
-            //estos dos ultimos están en desuso
-        });
+const db = 'node_curso';
+const user = 'carlos';
+const pss = '100%Lacrimosa';
+const host = 'localhost';
+const dialect = 'mysql';
 
-        console.log('base de datos online');
-    } catch (error) {
-        console.log(error);
-        throw new error('Error en la conexión');
-    }
-}
+const dbConnection = new Sequelize(db, user, pss, {
+    host,
+    dialect
+    // logging: false
+});
 
-//
-// const con = mysql.createConnection({
-//     host: 'localhost',
-//     user: 'root',
-//     password: '12345678'
-// });
-
-// const mySqlConn = async () => {
-//     try {
-//         await con.connect(err => {
-//             if (err) throw err;
-//             console.log("Connected!");
-//         });
-//     } catch (error) {
-//         console.log(error);
-//         throw new error('Error en la conexión de mysql');
-//     }
-// }
-
-//exporto la función dbConnection
 module.exports = {
-    dbConnection,
-    // mySqlConn
+    dbConnection
 };

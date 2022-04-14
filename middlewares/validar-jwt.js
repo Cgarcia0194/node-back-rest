@@ -1,8 +1,13 @@
 const jwt = require('jsonwebtoken'); //se importa la librería jsonwebtoken que sirve para generar los json web tokens
 
-const {mensaje, request, response} = require('../helpers');
 const {
-    Usuarios
+    respuesta,
+    request,
+    response
+} = require('../helpers');
+
+const {
+    Usuario
 } = require('../models');
 
 /**
@@ -16,23 +21,26 @@ const validarJWT = async (req = request, res = response, next) => {
     const token = req.header('x-token');
 
     if (!token) {
-        return mensaje(res, 401, 'No hay un token en la petición solicitada');
+        return respuesta(res, 401, 'info', 'No hay un token en la petición solicitada');
     }
 
     try {
         //token: el que manda el usuario front end
         //process.env.SECRETORPRIVATEKEY: es el que está en el backend en el archivo .env
-        const {uid} = jwt.verify(token, process.env.SECRETORPRIVATEKEY); //sirve para verificar el json web token
+        const {
+            uid
+        } = jwt.verify(token, process.env.SECRETORPRIVATEKEY); //sirve para verificar el json web token
 
+        const id = uid;
         //traigo la información del usuario que está logueado en el sistema y quiere eliminar a otro usuario
-        const usuario = await Usuarios.findById({_id: uid});
+        const usuario = await Usuario.findByPk(id);
 
         if (usuario) { //verifica que exista información del usuario que está logueado en el sistema
             if (usuario.estado === false) { //si existe, pero está en false es como si estuviera eliminado
-                return mensaje(res, 401, 'El usuario que está en el sistema está eliminado');
+                return respuesta(res, 401, 'error', 'El usuario que está en el sistema está eliminado');
             }
         } else { //si no existe el registro en la base de datos
-            return mensaje(res, 401, 'El usuario no existe');
+            return respuesta(res, 401, 'error', 'El usuario no existe');
         }
 
         //asigno el _id por uid para poder trabajar los tokens
@@ -40,8 +48,8 @@ const validarJWT = async (req = request, res = response, next) => {
         next(); //debe aplicarse este next para que conitnúe a evaluar e siguiente middleware
 
     } catch (error) {
-        console.log('Mirar el error',error);
-        return mensaje(res, 401, 'Token no válido');
+        console.log('Mirar el error', error);
+        return respuesta(res, 401, 'tokenError', 'Token no válido', error);
     }
 };
 

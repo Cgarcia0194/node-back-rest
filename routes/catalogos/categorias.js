@@ -1,59 +1,69 @@
 const {
     validarCampos,
     validarJWT,
-    esAdminRol
+    esAdminRol,
+    tieneRol
 } = require('../../middlewares');
 
-const {check, Router, existeCategoria, existeCategoriaPorId} = require('../../helpers');
+const {
+    check,
+    esRolValido,
+    existeEmail,
+    existeUsuarioPorId,
+    Router
+} = require('../../helpers');
 
 const {
-    crearCategoria,
+    registrarCategoria,
     actualizarCategoria,
-    eliminarCategoria,
-    consultarCategoriasActivas,
+    desactivarReactivarCategoria,
+    consultarCategorias,
     consultarCategoria
 } = require('../../controllers/catalogos/categorias');
-
-/**
- * para las peticiones que reciben id crear un middleware que sirve para validar que existe el id que se manda
- */
 
 //se llama la función Router en router, a este se le configuran las rutas
 const router = Router();
 
-//PARA LAS PETICIONES POST SE USAR req.body, ya que los datos no se mandan por URL se mandan por el cuerpo del mensaje
+/**
+ * RUTAS DE CATEGORIAS
+ */
+
 router.post('/', [
     validarJWT,
-    check('nombre', 'El nombre es obligatorio').not().isEmpty(),
+    check('txtNombre', 'El nombre es obligatorio').not().isEmpty(),
+    check('txtNombre', 'El nombre debe tener más de 4 digitos').isLength({
+        min: 4
+    }),
     validarCampos
-], crearCategoria);
+], registrarCategoria);
 
-router.put('/:idCategoria', [
-    validarJWT,
-    check('idCategoria', 'No es un id válido').isMongoId(),
-    check('idCategoria').custom(existeCategoriaPorId),
-    check('nombre', 'El nombre es obligatorio').not().isEmpty(),
-    check('nombre').custom(existeCategoria),
+//Sirve para actualizar datos
+router.put('/', [
+    check('idCategoria', 'El id es obligatorio').not().isEmpty(),
+    check('idCategoria', 'No es un id válido').isInt(),
+    check('txtNombre', 'El nombre es obligatorio').not().isEmpty(),
+    check('txtNombre', 'El nombre debe tener más de 4 digitos').isLength({
+        min: 4
+    }),
     validarCampos
 ], actualizarCategoria);
 
-router.delete('/:id', [
+//Sirve para eliminar registro
+router.delete('/', [
     validarJWT,
-    esAdminRol,
-    check('id', 'No es un id válido').isMongoId(),
-    check('id').custom(existeCategoriaPorId),
+    // esAdminRol,
+    check('idCategoria', 'El id es obligatorio').not().isEmpty(),
+    check('idCategoria', 'No es un id válido').isInt(),
+    // check('idUsuario').custom(existeUsuarioPorId),
     validarCampos
-], eliminarCategoria);
+], desactivarReactivarCategoria);
 
-//PARA LAS PETICIONES GET SE USA req.query, ya que son los datos que se mandan por URL después del ?
-//como nombre=carlos&apellidoP=García...
-router.get('/', consultarCategoriasActivas);
+router.get('/', [validarJWT], consultarCategorias);
 
+//consulta la categoria con id por url
 router.get('/:id', [
-    check('id', 'No es un id válido').isMongoId(),
-    check('id').custom(existeCategoriaPorId),
-    validarCampos
+    check('id', 'El id es obligatorio').not().isEmpty(),
+    check('id', 'No es un id válido').isInt(),
 ], consultarCategoria);
 
-//Se exporta la variable router que es una instancia de Router
 module.exports = router;

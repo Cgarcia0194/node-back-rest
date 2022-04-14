@@ -1,9 +1,9 @@
 const {
-    usuariosGet,
-    usuariosPost,
-    usuariosPut,
-    usuariosPatch,
-    usuariosDelete
+    registrarUsuario,
+    actualizarUsuario,
+    eliminarUsuario,
+    consultarUsuarios,
+    consultarUsuario
 } = require('../../controllers/procesos/usuarios');
 
 const {
@@ -13,7 +13,13 @@ const {
     tieneRol
 } = require('../../middlewares');
 
-const {check,esRolValido,existeEmail,existeUsuarioPorId,Router} = require('../../helpers');
+const {
+    check,
+    esRolValido,
+    existeEmail,
+    existeUsuarioPorId,
+    Router
+} = require('../../helpers');
 
 //se llama la función Router en router, a este se le configuran las rutas
 const router = Router();
@@ -21,7 +27,6 @@ const router = Router();
 /**
  * RUTAS DE USUARIOS
  */
-router.get('/', usuariosGet);
 
 /**
  * 1. Ruta
@@ -30,38 +35,45 @@ router.get('/', usuariosGet);
  * 3. Controlador de usuarios
  */
 router.post('/', [
-    check('nombre', 'El nombre es obligatorio').not().isEmpty(),
-    check('contrasenia', 'La contraseña debe tener más de 6 digitos').isLength({
+    check('txtNombre', 'El nombre es obligatorio').not().isEmpty(),
+    check('txtCorreo', 'El correo es obligatorio').not().isEmpty(),
+    check('txtCorreo', 'El correo no tiene el formato correcto').isEmail(),
+    check('txtContrasenia', 'La contraseña es obligatoria').not().isEmpty(),
+    check('txtContrasenia', 'La contraseña debe tener más de 6 digitos').isLength({
         min: 6
     }),
-    check('correo', 'El correo ingresado no tiene el formato de correo').isEmail(),
-    check('correo').custom(existeEmail),
-    // check('rol', 'No es un rol válido').isIn(['ADMIN_ROLE', 'USER_ROLE']),
-    // check('rol').custom(rol => esRolValido(rol)),//Es una función callback y se envía el parametro de manera automática
-    check('rol').custom(esRolValido),
+    check('idPersona', 'El id es obligatorio').not().isEmpty(),
+    check('idPersona', 'El id de la persona no tiene el formato correcto').isInt(),
     validarCampos
-], usuariosPost);
+], registrarUsuario);
 
-//Sirve para actualizar datos
-router.put('/:idUsuario', [
-    check('idUsuario', 'No es un id válido').isMongoId(),
-    check('idUsuario').custom(existeUsuarioPorId),
-    check('rol').custom(esRolValido),
-    validarCampos
-], usuariosPut);
-
-//
-router.patch('/', usuariosPatch);
-
-//Sirve para eliminar registro
-router.delete('/:idUsuario', [
+// //Sirve para actualizar datos
+router.put('/', [
     validarJWT,
-    // esAdminRol,
-    tieneRol('ADMIN_ROLE', 'VENTAS_ROLE', 'USER_ROLE'),
-    check('idUsuario', 'No es un id válido').isMongoId(),
-    check('idUsuario').custom(existeUsuarioPorId),
+    check('txtNombre', 'El nombre es obligatorio').not().isEmpty(),
+    check('txtCorreo', 'El correo es obligatorio').not().isEmpty(),
+    check('txtCorreo', 'El correo no tiene el formato correcto').isEmail(),
+    check('txtContrasenia', 'La contraseña es obligatoria').not().isEmpty(),
+    check('txtContrasenia', 'La contraseña debe tener más de 6 digitos').isLength({
+        min: 6
+    }),
+    check('idUsuario', 'El id es obligatorio').not().isEmpty(),
+    check('idUsuario', 'No es un id válido').isInt(),
+    // check('idUsuario').custom(existeUsuarioPorId),
     validarCampos
-], usuariosDelete);
+], actualizarUsuario);
 
-//Se exporta la variable router que es una instancia de Router
+router.delete('/', [
+    // validarJWT,
+    // esAdminRol,
+    check('idUsuario', 'El id es obligatorio').not().isEmpty(),
+    check('idUsuario', 'No es un id válido').isInt(),
+    // check('idUsuario').custom(existeUsuarioPorId),
+    validarCampos
+], eliminarUsuario);
+
+router.get('/', consultarUsuarios);
+
+router.get('/:id', consultarUsuario);
+
 module.exports = router;

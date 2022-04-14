@@ -1,5 +1,5 @@
 const {
-    mensaje,
+    respuesta,
     response
 } = require('../helpers');
 
@@ -13,9 +13,7 @@ const {
 const validarArchivoSubir = async (req, res = response, next) => {
     //verifica que en la req venga el files y por tamaño
     if (!req.files || Object.keys(req.files).length === 0) {
-        return mensaje(res, 400, {
-            msg: 'No se adjuntó ningún archivo'
-        });
+        return respuesta(res, 400, 'info', 'No se adjuntó ningún archivo');
     }
 
     next();

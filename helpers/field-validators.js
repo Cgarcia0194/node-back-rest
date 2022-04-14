@@ -8,7 +8,7 @@ const validarEstadoCivil = (estadoCivil = '') => {
     const empataEstadoCivil = estadosCiviles.includes(estadoCivil);
 
     if (!empataEstadoCivil) {
-        throw new Error(`El estado civil ${empataEstadoCivil} debe ser uno de los siguientes: ${estadosCiviles}`);
+        throw new Error(`El estado civil ${estadoCivil} debe ser uno de los siguientes: ${estadosCiviles}`);
     } else {
         return true;
     }

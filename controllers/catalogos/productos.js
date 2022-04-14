@@ -1,99 +1,225 @@
-const {mensaje, response} = require('../../helpers');
-const {Producto} = require('../../models');
+const {
+    Producto,
+    Categoria
+} = require('../../models');
+const {
+    respuesta,
+    response
+} = require('../../helpers');
 
-//Función que crea el producto
-const crearProducto = async (req, res = response) => {
-    const {nombre, descripcion, precio, categoria} = req.body;
+const {
+    dbConnection
+} = require("../../DB/config");
 
-    const productoDB = await Producto.findOne({nombre});
+const {
+    QueryTypes
+} = require("sequelize");
 
-    if (productoDB) {
-        return mensaje(res, 400, `El nombre del producto '${nombre}' ya está registrado`);
-    }
+//Función que inserta el producto
+const registrarProducto = async (req, res = response) => {
 
-    const data = {
-        nombre,
-        descripcion,
-        precio,
-        categoria,
-        usuario: req.usuario._id
-    };
-
-    const producto = new Producto(data);
-
-    await producto.save();
-
-    return mensaje(res, 201, producto);
-};
-
-//actualizar producto
-const actualizarProducto = async (req, res = response) => {
-    const {idProducto} = req.params;
-
-    const {nombre, descripcion, precio, categoria} = req.body;
-
-    const data = {
-        idProducto,
-        nombre,
-        descripcion,
-        precio,
-        categoria
-    };
-
-    const producto = await Producto.findByIdAndUpdate(idProducto, data, {new: true}); //LO ENCUENTRA Y ACTUALIZA
-
-    return mensaje(res, 200, producto);
-};
-
-//eliminar producto
-const eliminarProducto = async (req, res = response) => {
-    const {id} = req.params;
-
-    const productoEliminado = await Producto.findByIdAndUpdate(id, {
-        estatus: 'Inactivo'
-    }, {new: true});
-
-    return mensaje(res, 200, productoEliminado);
-};
-
-//obtener productos
-const consultarProductosActivos = async (req, res = response) => {
     const {
-        limite = 10, desde = 1
-    } = req.query; //valores que mando en la url para saber desde y el límite de registros que quiero
+        txtNombre,
+        txtDescripcion,
+        txtPrecio,
+        txtCantidad,
+        idCategoria
+    } = req.body;
 
-    const query = {
-        estatus: 'Activo'
-    };
-
-    const [total, productos] = await Promise.all([
-        Producto.countDocuments(query), //hace un conteo de los registros de la tabla
-        Producto.find(query) //find trae los registros de la tabla si no hay limit ni skip traerá toooodos
-        // .populate('usuario', ['nombre', 'correo'])//extrae de usuario el nombre y el correo, si no se pone se va mostrar todo el registro
-        .skip(Number(desde - 1)) //skip sirve para saltar
-        .limit(Number(limite)) //limit es para limitar con un número
-    ]);
-
-    return mensaje(res, 200, {total, productos});
-};
-
-//obtener producto
-const consultarProducto = async (req, res = response) => {
-    const {id} = req.params;
-
-    const producto = await Producto.findById(id).populate('categoria', 'nombre').populate('usuario',['nombre', 'correo']);
-
-    if (!producto) {
-        return mensaje(res, 400, `No se ha encontrado el producto con el id ${id}, tal vez está inactivo o no existe`);
+    const data = {
+        nombre: txtNombre,
+        descripcion: txtDescripcion,
+        precio: txtPrecio,
+        cantidad: txtCantidad,
+        categoria: idCategoria,
+        usuario: req.usuario.id
     }
 
-    return mensaje(res, 200, producto);
+    const categoria = await Categoria.findByPk(idCategoria);
+
+    if (!categoria) {
+        return respuesta(res, 400, 'info', 'No existe la categoria con el id: ' + idCategoria, null);
+    }
+
+    try {
+        const producto = Producto.build(data);
+        await producto.save();
+
+        return respuesta(res, 200, 'success', 'Se ha registrado el producto correctamente', producto);
+
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin', null);
+    }
+};
+
+//actualiza información en el servidor
+const actualizarProducto = async (req, res = response) => {
+
+    const {
+        idProducto,
+        txtNombre,
+        txtDescripcion,
+        txtPrecio,
+        txtCantidad,
+        idCategoria
+    } = req.body;
+
+    try {
+
+        const data = {
+            id: idProducto,
+            nombre: txtNombre,
+            descripcion: txtDescripcion,
+            precio: txtPrecio,
+            cantidad: txtCantidad,
+            categoria: idCategoria
+        }
+
+        const producto = await Producto.findByPk(idProducto);
+
+        if (!producto) {
+            return respuesta(res, 400, 'info', 'No existe el producto con el id: ' + idProducto);
+        }
+
+        const categoria = await Categoria.findByPk(idCategoria);
+
+        if (!categoria) {
+            return respuesta(res, 400, 'info', 'No existe la categoria con el id: ' + idCategoria);
+        }
+
+        await producto.update(data);
+
+        return respuesta(res, 200, 'success', 'Se ha actualizado la info de manera correcta', producto);
+
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin', null);
+    }
+};
+
+//elimina información del servidor
+const desactivarReactivarProducto = async (req, res = response) => {
+
+    const {
+        idProducto,
+        estatus
+    } = req.body;
+
+    try {
+
+        const producto = await Producto.findByPk(idProducto);
+
+        if (!producto) {
+            return respuesta(res, 400, 'info', 'No existe la categoria con el id: ' + idProducto);
+        }
+
+        await producto.update({
+            estatus
+        });
+
+        if (estatus == 1) {
+            return respuesta(res, 200, 'success', `Se ha reactivado el producto ${producto.nombre} correctamente`, producto);
+        } else {
+            return respuesta(res, 200, 'success', `Se ha desactivado el producto ${producto.nombre} correctamente`, producto);
+        }
+
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin', null);
+    }
+};
+
+//trae info del servidor
+const consultarProductos = async (req, res = response) => {
+
+    try {
+        const {
+            idCategoria
+        } = req.body;
+
+        const productos = await dbConnection.query(
+            'SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON categorias.id = productos.categoria WHERE productos.categoria = :idCategoria ', {
+                replacements: {
+                    idCategoria
+                },
+                type: QueryTypes.SELECT
+            }
+        );
+
+        if (!productos || productos.length === 0) {
+            return respuesta(res, 200, 'info', 'No hay información', null);
+        }
+
+        return respuesta(res, 200, 'success', 'Información consultada correctamente', productos);
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin', null);
+    }
+
+};
+
+//trae info del servidor
+const consultarCategorias = async (req, res = response) => {
+
+    try {
+        const categorias = await dbConnection.query(
+            'SELECT * FROM categorias ', {
+                // replacements: {
+                //     estatus: 1
+                // },
+                type: QueryTypes.SELECT
+            }
+        );
+
+        // const categorias = await Usuario.findAll();
+
+        if (!categorias || categorias.length === 0) {
+            return respuesta(res, 200, 'info', 'La tabla no tiene categorias registradas');
+        }
+
+        return respuesta(res, 200, 'success', 'Información consultada correctamente', categorias);
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin', null);
+    }
+};
+
+//consulta un producto por id
+const consultarProducto = async (req, res = response) => {
+    const {
+        id
+    } = req.params;
+
+    try {
+
+        let producto = await Producto.findByPk(id);
+
+        if (!producto) {
+            return respuesta(res, 400, 'info', `No existe el producto con el id: ${id}`);
+        }
+
+        producto = await dbConnection.query(
+            'SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON categorias.id = productos.categoria WHERE productos.id = :id ', {
+                //'SELECT productos.*, categorias.nombre AS categoria_nombre FROM productos INNER JOIN categorias ON categorias.id = productos.categoria WHERE productos.id = :id AND productos.estatus + 0 = :estatus ', {
+                replacements: {
+                    id
+                },
+                type: QueryTypes.SELECT
+            }
+        );
+
+        return respuesta(res, 200, 'success', 'Información consultada correctamente', producto);
+    } catch (error) {
+        console.log(error);
+    }
 };
 
 module.exports = {
-    crearProducto,
+    registrarProducto,
     actualizarProducto,
-    eliminarProducto,
-    consultarProductosActivos,
-    consultarProducto,
-}
+    desactivarReactivarProducto,
+    consultarProductos,
+    consultarCategorias,
+    consultarProducto
+};

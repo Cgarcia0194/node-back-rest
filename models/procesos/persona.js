@@ -1,90 +1,72 @@
 const {
-    Schema,
-    model
-} = require('mongoose');
-const moment = require('moment');
+    DataTypes
+} = require("sequelize");
 
-//Función que sirve para crear un esquema con los campos que va usar la tabla
-const personaSchema = Schema({
+const {
+    dbConnection
+} = require("../../DB/config");
+
+const Persona = dbConnection.define('Personas', {
     nombre: {
-        type: String,
+        type: DataTypes.STRING,
         required: [true, 'El nombre es obligatorio']
     },
     apellido_paterno: {
-        type: String,
-        required: [true, 'El apellido paterno es obligatorio']
+        type: DataTypes.STRING
     },
     apellido_materno: {
-        type: String
+        type: DataTypes.STRING
     },
     rfc: {
-        type: String
+        type: DataTypes.STRING,
+        required: [true, 'El nombre es obligatorio']
     },
     curp: {
-        type: String,
-        required: [true, 'La CURP es obligatorio']
+        type: DataTypes.STRING,
+        required: [true, 'El nombre es obligatorio']
     },
     genero: {
-        type: String,
-        required: [true, 'El género es obligatorio'],
-        enum: ['Hombre', 'Mujer', 'Sin especificar'],
-        default: 'Sin especificar',
+        type: DataTypes.ENUM,
+        values: ['Hombre', 'Mujer', 'Sin especificar'],
+        defaultValue: 'Sin especificar',
+        required: [true, 'El nombre es obligatorio']
     },
     telefono: {
-        type: String,
+        type: DataTypes.STRING,
         required: [true, 'El teléfono es obligatorio']
     },
-    telefono_opcional: {
-        type: String
+    telefono_fijo: {
+        type: DataTypes.STRING,
+        required: [true, 'El teléfono fijo es obligatorio']
     },
     fecha_nacimiento: {
-        type: Date,
+        type: DataTypes.DATEONLY,
         required: [true, 'La fecha de nacimiento es obligatoria']
     },
     edad: {
-        type: Number,
-        required: [true, 'La edad obligatoria']
+        type: DataTypes.INTEGER,
+        required: [true, 'La edad es obligatorio']
     },
-    correo: {
-        type: String,
+    correo_electronico: {
+        type: DataTypes.STRING,
         required: [true, 'El correo es obligatorio']
     },
-    google: {
-        type: Boolean,
-        default: false
-    },
     estado_civil: {
-        type: String,
-        required: [true, 'El estado civil es obligatorio'],
-        enum: ['Casado', 'Divorciado', 'Soltero', 'Unión libre', 'Viudo', 'Sin especificar'],
-        default: 'Sin especificar',
+        type: DataTypes.INTEGER,
+        required: [true, 'El estado civil es obligatorio']
     },
     nacionalidad: {
-        type: String,
+        type: DataTypes.INTEGER,
         required: [true, 'La nacionalidad es obligatoria']
     },
-    img: {
-        type: String
+    municipio: {
+        type: DataTypes.INTEGER,
+        required: [true, 'El municipio es obligatorio']
     },
-    fecha_registro: {
-        type: Date,
-        default: moment.utc(Date.now()).format("YYYY-MM-DD HH:mm:ss")
+    imagen: {
+        type: DataTypes.STRING,
+        required: [true, 'La imagen es obligatoria']
     }
 });
 
-//función que sirve para desestructurar el objeto personaSchema y quitar el __v y contrasenia
-personaSchema.methods.toJSON = function () {
-    const {
-        __v,
-        _id,
-        ...personaRest
-    } = this.toObject(); //genera un objeto con los valores de la instancia a personaSchema
-    personaRest.uid = _id; // se convierte el campo _id por uid
-
-    return personaRest;
-}
-
-//se exporta con la función de model, lo que ayuda a ponerlo en una colección y el nombre
-//Persona = es el nombre del model y debe ser en plural
-//personaSchema = es el esquema/modelo que se mandará
-module.exports = model('Persona', personaSchema);
+module.exports = Persona;

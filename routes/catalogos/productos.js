@@ -1,63 +1,81 @@
 const {
     validarCampos,
     validarJWT,
-    esAdminRol
 } = require('../../middlewares');
 
 const {
     check,
-    existeCategoriaPorId,
-    existeProductoPorId,
     Router
 } = require('../../helpers');
 
 const {
-    consultarProductosActivos,
-    consultarProducto,
+    registrarProducto,
     actualizarProducto,
-    eliminarProducto,
-    crearProducto
+    desactivarReactivarProducto,
+    consultarProductos,
+    consultarCategorias,
+    consultarProducto
 } = require('../../controllers/catalogos/productos');
 
+//se llama la función Router en router, a este se le configuran las rutas
 const router = Router();
+
+/**
+ * RUTAS DE PRODUCTOS
+ */
 
 router.post('/', [
     validarJWT,
-    check('nombre', 'El nombre es obligatorio').not().isEmpty(),
-    check('descripcion', 'La descripción es obligatoria').not().isEmpty(),
-    check('categoria', 'Debes proporcionar el id de la categoria').not().isEmpty(),
-    check('categoria', 'El id de la categoria no es válido').isMongoId(),
-    check('categoria').custom(existeCategoriaPorId),
+    check('txtNombre', 'El nombre es obligatorio').not().isEmpty(),
+    check('txtNombre', 'El nombre debe tener más de 4 digitos').isLength({
+        min: 4
+    }),
+    check('txtDescripcion', 'La descripción es obligatoria').not().isEmpty(),
+    check('txtPrecio', 'El precio es obligatorio').not().isEmpty(),
+    check('txtPrecio', 'El precio debe ser número').isNumeric(),
+    check('txtCantidad', 'La cantidad es obligatoria').not().isEmpty(),
+    check('txtCantidad', 'La cantidad debe ser número').isNumeric(),
+    check('idCategoria', 'El id es obligatorio').not().isEmpty(),
+    check('idCategoria', 'No es un id válido').isInt(),
     validarCampos
-], crearProducto);
+], registrarProducto);
 
-router.put('/:idProducto', [
-    validarJWT,
-    check('idProducto', 'El id del producto no es válido').isMongoId(),
-    check('idProducto').custom(existeProductoPorId),
-    check('nombre', 'El nombre es obligatorio').not().isEmpty(),
-    check('descripcion', 'La descripción es obligatoria').not().isEmpty(),
-    check('precio', 'El precio debe ser número').isNumeric(),
-    check('categoria', 'Debes proporcionar el id de la categoria').not().isEmpty(),
-    check('categoria', 'El id de la categoria no es válido').isMongoId(),
-    check('categoria').custom(existeCategoriaPorId),
+//Sirve para actualizar datos
+router.put('/', [
+    check('idProducto', 'El id es obligatorio').not().isEmpty(),
+    check('idProducto', 'No es un id válido').isInt(),
+    check('txtNombre', 'El nombre es obligatorio').not().isEmpty(),
+    check('txtNombre', 'El nombre debe tener más de 4 digitos').isLength({
+        min: 4
+    }),
+    check('txtDescripcion', 'La descripción es obligatoria').not().isEmpty(),
+    check('txtPrecio', 'El precio es obligatorio').not().isEmpty(),
+    check('txtPrecio', 'El precio debe ser número').isNumeric(),
+    check('txtCantidad', 'La cantidad es obligatoria').not().isEmpty(),
+    check('txtCantidad', 'La cantidad debe ser número').isNumeric(),
+    check('idCategoria', 'El id es obligatorio').not().isEmpty(),
+    check('idCategoria', 'No es un id válido').isInt(),
     validarCampos
 ], actualizarProducto);
 
-router.delete('/:id', [
+//Sirve para eliminar registro
+router.delete('/', [
     validarJWT,
-    esAdminRol,
-    check('id', 'El id del producto no es válido').isMongoId(),
-    check('id').custom(existeProductoPorId),
+    // esAdminRol,
+    check('idProducto', 'El id es obligatorio').not().isEmpty(),
+    check('idProducto', 'No es un id válido').isInt(),
+    // check('idUsuario').custom(existeUsuarioPorId),
     validarCampos
-], eliminarProducto);
+], desactivarReactivarProducto);
 
-router.get('/', consultarProductosActivos);
+router.post('/productos', [validarJWT], consultarProductos);
 
+router.get('/categorias', [validarJWT], consultarCategorias);
+
+//consulta la categoria con id por url
 router.get('/:id', [
-    check('id', 'No es un id válido').isMongoId(),
-    check('id').custom(existeProductoPorId),
-    validarCampos
+    check('id', 'El id es obligatorio').not().isEmpty(),
+    check('id', 'No es un id válido').isInt(),
 ], consultarProducto);
 
 module.exports = router;

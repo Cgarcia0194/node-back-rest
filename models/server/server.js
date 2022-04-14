@@ -1,8 +1,7 @@
 const cors = require("cors"); //se requiere cors para el uso de peticiones fuera del servidor
 const express = require("express"); //se impporta/requiere express para hacer más fácil la configuración del server
 const {
-  dbConnection,
-  mySqlConn
+  dbConnection
 } = require("../../DB/config");
 
 const {
@@ -19,20 +18,20 @@ class Server {
     //objeto donde se establecen las rutas que se van a estar usando o que se llevan creadas en el proyecto
     this.paths = {
       authPath: "/api/auth", //se establece la ruta donde están las rutas de authentication y se define api
-      buscarPath: "/api/buscar", //se establece la ruta donde están las rutas de authentication y se define api
+      // buscarPath: "/api/buscar", //se establece la ruta donde están las rutas de authentication y se define api
       categoriasPath: "/api/categorias", //se establece la ruta donde están las rutas de categorias y se define api
-      coloniasPath: "/api/colonias", //se establece la ruta donde están las rutas de authentication y se define api
-      estadosPath: "/api/estados", //se establece la ruta donde están las rutas de authentication y se define api
-      movimientosPath: "/api/movimientos", //se establece la ruta donde están las rutas de authentication y se define api
-      paisesPath: "/api/paises", //se establece la ruta donde están las rutas de paises y se define api
+      // coloniasPath: "/api/colonias", //se establece la ruta donde están las rutas de authentication y se define api
+      // estadosPath: "/api/estados", //se establece la ruta donde están las rutas de authentication y se define api
+      // movimientosPath: "/api/movimientos", //se establece la ruta donde están las rutas de authentication y se define api
+      // paisesPath: "/api/paises", //se establece la ruta donde están las rutas de paises y se define api
       personasPath: "/api/personas", //se establece la ruta donde están las rutas de personas y se define api
       productosPath: "/api/productos", //se establece la ruta donde están las rutas de paises y se define api
-      uploadsPath: "/api/uploads", //se establece la ruta donde están las rutas de usuarios y se define api
+      // uploadsPath: "/api/uploads", //se establece la ruta donde están las rutas de usuarios y se define api
       usuariosPath: "/api/usuarios", //se establece la ruta donde están las rutas de usuarios y se define api
     };
 
     //conecta a la base de datos
-    this.conectarDB();
+    this.dbConnect();
 
     //MIDDLEWARES Funciones que añaden funcionalidad al web server
     /**
@@ -47,9 +46,14 @@ class Server {
   /**
    * Función que sirve para invocar a la función dbConnection que conecta a la base de datos
    */
-  async conectarDB() {
-    await dbConnection();
-    // await mySqlConn();
+  async dbConnect() {
+    try {
+      await dbConnection.authenticate();
+      
+      console.log('db Online');
+    } catch (error) {
+      throw new Error('error: ' + error);
+    }
   }
 
   /**
@@ -92,15 +96,15 @@ class Server {
      * y se manda llamar a require('../routes/user')
      */
     this.app.use(this.paths.authPath, require("../../routes/auth")); //se define la ruta de authPath haciendo el require de la ruta ../routes/auth
-    this.app.use(this.paths.buscarPath, require("../../routes/buscar"));
+    // this.app.use(this.paths.buscarPath, require("../../routes/buscar"));
     this.app.use(this.paths.categoriasPath, require("../../routes/catalogos/categorias"));
-    this.app.use(this.paths.coloniasPath, require("../../routes/catalogos/colonias"));
-    this.app.use(this.paths.estadosPath, require("../../routes/catalogos/estados"));
-    this.app.use(this.paths.movimientosPath, require("../../routes/gastos/movimientos"));
-    this.app.use(this.paths.paisesPath, require("../../routes/catalogos/paises"));
+    // this.app.use(this.paths.coloniasPath, require("../../routes/catalogos/colonias"));
+    // this.app.use(this.paths.estadosPath, require("../../routes/catalogos/estados"));
+    // this.app.use(this.paths.movimientosPath, require("../../routes/gastos/movimientos"));
+    // this.app.use(this.paths.paisesPath, require("../../routes/catalogos/paises"));
     this.app.use(this.paths.personasPath, require("../../routes/procesos/personas"));
     this.app.use(this.paths.productosPath, require("../../routes/catalogos/productos"));
-    this.app.use(this.paths.uploadsPath, require("../../routes/uploads"));
+    // this.app.use(this.paths.uploadsPath, require("../../routes/uploads"));
     this.app.use(this.paths.usuariosPath, require("../../routes/procesos/usuarios"));
   }
 

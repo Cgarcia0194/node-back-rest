@@ -6,8 +6,8 @@ const fieldValidators = require('../helpers/field-validators');
 const generarJWT = require('../helpers/generar-jwt');
 //archivo que sirve para verificar mediante google
 const googleVerify = require('../helpers/google-verify');
-//archivo que sirve para generar los mensajes de error o según los valores que se manden
-const mensajes = require('../helpers/mensajes');
+//archivo que sirve para generar los respuestas de error o según los valores que se manden
+const helpers = require('./helpers');
 //archivo que contiene los requires o importaciones de otras librerías
 const requires = require('../helpers/requires');
 //archivo que sirve para subir archivos
@@ -19,7 +19,7 @@ module.exports = {
     ...fieldValidators,
     ...generarJWT,
     ...googleVerify,
-    ...mensajes,
+    ...helpers,
     ...requires,
     ...subirArchivo
 };

@@ -1,4 +1,6 @@
-const {OAuth2Client} = require('google-auth-library');//importa la librería de google auth para entrar con correo de google
+const {
+    OAuth2Client
+} = require('google-auth-library'); //importa la librería de google auth para entrar con correo de google
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -7,6 +9,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
  * @param {*} token 
  */
 async function googleVerify(token = '') {
+
     const ticket = await client.verifyIdToken({ //sirve para verificar el token de Google
         idToken: token,
         audience: process.env.GOOGLE_CLIENT_ID, // Specify the CLIENT_ID of the app that accesses the backend

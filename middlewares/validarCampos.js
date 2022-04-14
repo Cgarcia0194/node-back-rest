@@ -4,7 +4,7 @@
  * 
  */
 const {validationResult} = require('express-validator');
-const {mensaje} = require('../helpers');
+const {respuesta} = require('../helpers');
 
 /**
  * función que sirve para poder validar los campos
@@ -17,7 +17,7 @@ const validarCampos = (req, res, next) => {
     const error = validationResult(req);
 
     if(!error.isEmpty()){
-        return mensaje(res, 400, error);
+        return respuesta(res, 400, 'error', 'Error al validar los campos', error);
     }
 
     next();//si no pasa por el if llega aquí y manda al otro argumento de la ruta POST

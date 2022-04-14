@@ -1,47 +1,43 @@
 const {
-    Schema,
-    model
-} = require('mongoose');
-const moment = require('moment');
+    DataTypes
+} = require("sequelize");
 
-const productoSchema = Schema({
+const {
+    dbConnection
+} = require("../../DB/config");
+
+const Producto = dbConnection.define('Productos', {
     nombre: {
-        type: String,
+        type: DataTypes.STRING,
         required: [true, 'El nombre es obligatorio']
     },
     descripcion: {
-        type: String,
+        type: DataTypes.STRING,
         required: [true, 'La descripción es obligatoria']
     },
     precio: {
-        type: Number,
-        default: 0
+        type: DataTypes.DOUBLE,
+        required: [true, 'El precio es obligatorio']
     },
-    img: {
-        type: String
-    },
-    estatus: {
-        type: String,
-        enum: ['Activo', 'Inactivo'],
-        default: 'Activo',
-        required: true
+    cantidad: {
+        type: DataTypes.DOUBLE,
+        required: [true, 'La cantidad es obligatoria']
     },
     categoria: {
-        type: Schema.Types.ObjectId,
-        ref: 'Categoria',
+        type: DataTypes.INTEGER,
+        required: true,
+        required: [true, 'La categoria es obligatoria']
+    },
+    estatus: {
+        type: DataTypes.ENUM,
+        values: ['Activo', 'Inactivo'],
+        defaultValue: 'Activo',
         required: true
     },
     usuario: {
-        type: Schema.Types.ObjectId,
-        ref: 'Usuarios',
+        type: DataTypes.INTEGER,
         required: true
-    },
-    fecha_registro: {
-        type: Date,
-        default: moment.utc(Date.now()).format("YYYY-MM-DD")
-    },
+    }
 });
 
-//Producto = es el nombre que tendrá la tabla a donde se guardará, si no está creada lo crea con el nombre
-//productoSchema = es el esquema/modelo que se mandará
-module.exports = model('Producto', productoSchema);
+module.exports = Producto;
