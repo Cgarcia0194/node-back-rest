@@ -5,7 +5,7 @@
 npm install
 ```
 
-## IMPORTANTE: Crear archivo .env con los siguientes nombres:
+## IMPORTANTE: Crear archivo .env con las siguientes variables y asignar su valor:
 ```
 PORT
 ```
