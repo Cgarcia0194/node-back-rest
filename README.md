@@ -15,6 +15,11 @@ PORT
 SECRETORPRIVATEKEY
 ```
 
+## Poner variables del servidor MYSQL local en el archivo ubicado en la siguiente ruta:
+```
+DB->config.js
+```
+
 ### Ejecutar la aplicación con el siguiente comando
 ```
 node app 
