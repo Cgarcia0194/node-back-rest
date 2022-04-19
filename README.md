@@ -5,12 +5,12 @@
 npm install
 ```
 
-### ejecutar la aplicación con el siguiente comando
+### Ejecutar la aplicación con el siguiente comando
 ```
 node app 
 ```
 
-### ejecutar la aplicación con el siguiente comando si se tiene Nodemon instalado
+### Ejecutar la aplicación con el siguiente comando con Nodemon
 ```
 nodemon app 
 ```
