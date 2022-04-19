@@ -7,7 +7,8 @@ const {
     respuesta,
     request,
     response,
-    encriptarTexto
+    encriptarTexto,
+    compararTextoEncriptado
 } = require('../../helpers');
 
 const {
@@ -137,7 +138,47 @@ const actualizarPersona = async (req, res = response) => {
     } catch (error) {
         console.log(error);
         return respuesta(res, 500, 'error', 'Hable con un admin');
+    }
+};
 
+const actualizarUsuario = async (req, res = response) => {
+    const {
+        txtCorreo,
+        txtContraseniaActual,
+        txtContraseniaNueva
+    } = req.body;
+
+    try {
+        //traigo el id del JWT
+        const id = req.usuario.id;
+
+        //comparo la contrasenia actual con la contrasenia del usuario
+        const pssActualEncript = compararTextoEncriptado(txtContraseniaActual, req.usuario.contrasenia);
+
+        //se compara si el correo y la contrasenia están bien
+        if (pssActualEncript === true) {
+            //encripto la nuevacontrasenia
+            const pssNuevaEncript = encriptarTexto(txtContraseniaNueva);
+
+            const data = {
+                id,
+                correo: txtCorreo,
+                contrasenia: pssNuevaEncript
+            };
+
+            //se trae el usuario que se va actualizar
+            const usuario = await Usuario.findByPk(id);
+
+            //se actualiza el usuario
+            await usuario.update(data);
+
+            return respuesta(res, 200, 'success', 'Se ha actualizado la info de manera correcta', usuario);
+        } else {
+            return respuesta(res, 500, 'info', 'El correo o la contraseña no coinciden', null);
+        }
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin', null);
     }
 };
 
@@ -203,7 +244,7 @@ const consultarPersona = async (req = request, res = response) => {
         const id = req.usuario.id;
 
         const usuario = await dbConnection.query(
-            'SELECT personas.*, usuarios.estatus AS usuarios_estatus, usuarios.correo AS usuarios_correo FROM usuarios INNER JOIN personas ON personas.id = usuarios.persona WHERE usuarios.id = :id ', {
+            'SELECT personas.*, usuarios.estatus AS usuarios_estatus, usuarios.correo AS usuarios_correo, estados.id AS estados_id, paises.id AS paises_id FROM usuarios INNER JOIN personas ON personas.id = usuarios.persona JOIN municipios ON municipios.id = personas.municipio JOIN estados ON estados.id = municipios.estado JOIN paises ON paises.id = estados.pais WHERE usuarios.id = :id ', {
                 replacements: {
                     id
                 },
@@ -222,10 +263,113 @@ const consultarPersona = async (req = request, res = response) => {
     }
 };
 
+const consultarNacionalidades = async (req = request, res = response) => {
+
+    try {
+
+        const paises = await dbConnection.query(
+            'SELECT *, estatus + 0 AS estatus_indice FROM paises ', {
+                type: QueryTypes.SELECT
+            }
+        );
+
+        if (!paises || paises.length === 0) {
+            return respuesta(res, 200, 'info', 'No hay paises registrados');
+        }
+
+        return respuesta(res, 200, 'success', 'Información consultada correctamente', paises);
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin', null);
+    }
+};
+
+const consultarPaises = async (req = request, res = response) => {
+
+    try {
+
+        const paises = await dbConnection.query(
+            'SELECT *, estatus + 0 AS estatus_indice FROM paises ', {
+                type: QueryTypes.SELECT
+            }
+        );
+
+        if (!paises || paises.length === 0) {
+            return respuesta(res, 200, 'info', 'No hay paises registrados');
+        }
+
+        return respuesta(res, 200, 'success', 'Información consultada correctamente', paises);
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin', null);
+    }
+};
+
+const consultarEstados = async (req = request, res = response) => {
+
+    try {
+
+        const {
+            idPais
+        } = req.body;
+
+        const estados = await dbConnection.query(
+            'SELECT *, estatus + 0 AS estatus_indice FROM estados WHERE pais = :id', {
+                replacements: {
+                    id: idPais
+                },
+                type: QueryTypes.SELECT
+            }
+        );
+
+        if (!estados || estados.length === 0) {
+            return respuesta(res, 200, 'info', 'No hay estados registrados con el pais seleccionado');
+        }
+
+        return respuesta(res, 200, 'success', 'Información consultada correctamente', estados);
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin', null);
+    }
+};
+
+const consultarMunicipios = async (req = request, res = response) => {
+
+    try {
+
+        const {
+            idEstado
+        } = req.body;
+
+        const municipios = await dbConnection.query(
+            'SELECT *, estatus + 0 AS estatus_indice FROM municipios WHERE estado = :id', {
+                replacements: {
+                    id: idEstado
+                },
+                type: QueryTypes.SELECT
+            }
+        );
+
+        if (!municipios || municipios.length === 0) {
+            return respuesta(res, 200, 'info', 'No hay municipios registrados con el estado seleccionado');
+        }
+
+        return respuesta(res, 200, 'success', 'Información consultada correctamente', municipios);
+    } catch (error) {
+        console.log(error);
+        return respuesta(res, 500, 'error', 'Hable con un admin', null);
+    }
+};
+
 module.exports = {
     registrarPersona,
     actualizarPersona,
+    actualizarUsuario,
     eliminarPersona,
     consultarPersonas,
-    consultarPersona
+    consultarPersona,
+    consultarNacionalidades,
+    consultarPaises,
+    consultarEstados,
+    consultarMunicipios
 };

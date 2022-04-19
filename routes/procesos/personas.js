@@ -1,23 +1,23 @@
 const {
     registrarPersona,
     actualizarPersona,
+    actualizarUsuario,
     eliminarPersona,
     consultarPersonas,
-    consultarPersona
+    consultarPersona,
+    consultarNacionalidades,
+    consultarPaises,
+    consultarEstados,
+    consultarMunicipios
 } = require('../../controllers/procesos/personas');
 
 const {
     validarCampos,
     validarJWT,
-    esAdminRol,
-    tieneRol
 } = require('../../middlewares');
 
 const {
     check,
-    esRolValido,
-    existeEmail,
-    existeUsuarioPorId,
     Router,
     validarCURP,
     validarEstadoCivil
@@ -109,6 +109,15 @@ router.put('/', [
     validarCampos
 ], actualizarPersona);
 
+router.put('/usuario', [
+    validarJWT,
+    check('txtCorreo', 'El correo es obligatorio').not().isEmpty(),
+    check('txtCorreo', 'El correo debe ser un correo').isEmail(),
+    check('txtContraseniaActual', 'El correo es obligatorio').not().isEmpty(),
+    check('txtContraseniaNueva', 'El correo es obligatorio').not().isEmpty(),
+    validarCampos
+], actualizarUsuario);
+
 router.delete('/', [
     validarJWT,
     // esAdminRol,
@@ -121,5 +130,13 @@ router.delete('/', [
 // router.get('/', [validarJWT], consultarPersonas);
 
 router.get('/', [validarJWT], consultarPersona);
+
+router.get('/nacionalidades', [validarJWT], consultarNacionalidades);
+
+router.get('/paises', [validarJWT], consultarPaises);
+
+router.post('/estados', [validarJWT], consultarEstados);
+
+router.post('/municipios', [validarJWT], consultarMunicipios);
 
 module.exports = router;
