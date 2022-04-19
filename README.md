@@ -20,6 +20,7 @@ SECRETORPRIVATEKEY=PRIVATEKEY_A_USAR
 DB->config.js
 ```
 
+
 ### Ejecutar la aplicación con el siguiente comando
 ```
 node app 
