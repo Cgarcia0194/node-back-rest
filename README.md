@@ -5,6 +5,16 @@
 npm install
 ```
 
+## IMPORTANTE: Crear archivo .env con los siguientes nombres:
+```
+PORT
+```
+
+## Y
+```
+SECRETORPRIVATEKEY
+```
+
 ### Ejecutar la aplicación con el siguiente comando
 ```
 node app 
