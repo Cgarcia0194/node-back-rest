@@ -13,7 +13,7 @@ require("dotenv").config(); //se requiere el dotenv para hacer uso de archivos .
 class Server {
   constructor() {
     this.app = express(); //se guarda el método express de arriba en app
-    this.port = process.env.PORT; // se guarda el puerto desde el archivo .env
+    this.port = process.env.PORT != undefined ? process.env.PORT : "3001"; // se guarda el puerto desde el archivo .env
 
     //objeto donde se establecen las rutas que se van a estar usando o que se llevan creadas en el proyecto
     this.paths = {
