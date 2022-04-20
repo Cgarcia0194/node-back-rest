@@ -5,7 +5,7 @@
 npm install
 ```
 
-## IMPORTANTE: Crear archivo .env con las siguientes variables y asignar su valor:
+## IMPORTANTE: Crear archivo .env (o ver el .env.example) con las siguientes variables y asignar su valor:
 ```
 PORT=PUERTO_A_USAR
 ```
